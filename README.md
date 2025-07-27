@@ -1,4 +1,4 @@
-# 🧠 MindWave Mobile 2 – Neurofeedback & Baseline Recording (Python)
+# MindWave Mobile 2 - Neurofeedback & Baseline Recording (Python)
 
 This repository contains two Python scripts for performing **baseline EEG recording** and **real-time neurofeedback** using the **NeuroSky MindWave Mobile 2** headset.
 
@@ -6,13 +6,13 @@ It reads brainwave data (attention, meditation, and EEG band powers) from the **
 
 ---
 
-## 📦 Setup Instructions
+## Setup Instructions
 
 ### 1. Install Python
 
 Download and install **Python 3.8 or later** from the official site:
 
-👉 https://www.python.org/downloads/
+https://www.python.org/downloads/
 
 > ⚠️ During installation, make sure to check **“Add Python to PATH”**.
 
