@@ -8,18 +8,22 @@ import os
 import sys
 import ctypes
 
-# === Force Load VLC DLLs ===
-lib_path = os.path.abspath(os.path.dirname(__file__))  # current folder
-os.environ['PATH'] = lib_path + os.pathsep + os.environ['PATH']
+vlc_path = r"C:\VLC"
+os.environ["PATH"] = vlc_path + os.pathsep + os.environ.get("PATH", "")
+os.environ["VLC_PLUGIN_PATH"] = os.path.join(vlc_path, "plugins")
 
 try:
-    ctypes.CDLL(os.path.join(lib_path, "libvlc.dll"))
-    print("[INFO] libvlc.dll loaded successfully.")
+    ctypes.CDLL(os.path.join(vlc_path, "libvlc.dll"))
+    print("[INFO] libvlc.dll loaded.")
 except Exception as e:
-    print(f"[ERROR] Could not manually load libvlc.dll: {e}")
-    exit()
+    print(f"[ERROR] Could not load libvlc.dll: {e}")
+    sys.exit(1)
 
 import vlc
+instance = vlc.Instance()
+media = instance.media_player_new()
+media.set_media(instance.media_new("NF Video.mp4"))
+
 
 
 IP = '127.0.0.1'
@@ -137,4 +141,5 @@ finally:
     df_feedback.to_csv(nf_details_file, index=False)
 
     print(f"[SUCCESS] Data saved:\n→ {nf_file}\n→ {nf_details_file}")
+
 
