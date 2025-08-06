@@ -8,7 +8,7 @@ import os
 import sys
 import ctypes
 
-vlc_path = r"C:\VLC"
+vlc_path = r"C:\Program Files (x86)\VideoLAN\VLC"
 os.environ["PATH"] = vlc_path + os.pathsep + os.environ.get("PATH", "")
 os.environ["VLC_PLUGIN_PATH"] = os.path.join(vlc_path, "plugins")
 
@@ -141,5 +141,6 @@ finally:
     df_feedback.to_csv(nf_details_file, index=False)
 
     print(f"[SUCCESS] Data saved:\n→ {nf_file}\n→ {nf_details_file}")
+
 
 
