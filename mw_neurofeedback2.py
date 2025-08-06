@@ -3,7 +3,24 @@ import json
 import time
 import pandas as pd
 import numpy as np
+#import vlc
+import os
+import sys
+import ctypes
+
+# === Force Load VLC DLLs ===
+lib_path = os.path.abspath(os.path.dirname(__file__))  # current folder
+os.environ['PATH'] = lib_path + os.pathsep + os.environ['PATH']
+
+try:
+    ctypes.CDLL(os.path.join(lib_path, "libvlc.dll"))
+    print("[INFO] libvlc.dll loaded successfully.")
+except Exception as e:
+    print(f"[ERROR] Could not manually load libvlc.dll: {e}")
+    exit()
+
 import vlc
+
 
 IP = '127.0.0.1'
 PORT = 13854
@@ -120,3 +137,4 @@ finally:
     df_feedback.to_csv(nf_details_file, index=False)
 
     print(f"[SUCCESS] Data saved:\n→ {nf_file}\n→ {nf_details_file}")
+
