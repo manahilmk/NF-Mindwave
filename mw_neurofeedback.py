@@ -3,6 +3,7 @@ import json
 import time
 import pandas as pd
 import numpy as np
+import vlc
 
 IP = '127.0.0.1'
 PORT = 13854
@@ -37,6 +38,17 @@ except Exception as e:
     print(f"[ERROR] Could not load baseline file: {e}")
     exit()
 
+# === VLC Setup ===
+media = vlc.MediaPlayer("NF Video.mp4")
+media_state = 0  # 0 = paused, 1 = playing
+
+print("[INFO] Starting VLC player...")
+media.play()
+time.sleep(2)
+media.pause()
+print("[INFO] VLC initialized and paused. Starting session in 5 seconds.")
+time.sleep(5)
+
 # === Real-time NFB ===
 sock = connect_to_mindwave()
 start_time = time.time()
@@ -45,54 +57,66 @@ raw_data = []
 nf_scores = []
 nf_beta_vals = []
 
-print("[INFO] Starting neurofeedback session...")
-print("[INFO] Monitoring beta activity in real-time...")
+print("[INFO] Beginning neurofeedback session...")
 
-while time.time() - start_time < session_duration:
-    try:
+try:
+    while time.time() - start_time < session_duration:
         response = sock.recv(4096).decode('utf-8')
         packets = response.strip().split('\r')
         for packet in packets:
             if not packet:
                 continue
-            data = json.loads(packet)
+            try:
+                data = json.loads(packet)
+            except:
+                continue
             if "eegPower" in data and "eSense" in data:
                 eeg = data["eegPower"]
                 attention = data["eSense"]["attention"]
                 meditation = data["eSense"]["meditation"]
                 timestamp = time.time()
+
                 low_beta = eeg.get("lowBeta", 0)
                 high_beta = eeg.get("highBeta", 0)
                 beta_mean = np.mean([low_beta, high_beta])
                 nf_beta_vals.append(beta_mean)
-                nf_scores.append(1 if beta_mean > beta_threshold else 0)
-                
-                output = {
+                score = 1 if beta_mean > beta_threshold else 0
+                nf_scores.append(score)
+
+                raw_data.append({
                     "timestamp": timestamp,
                     "attention": attention,
                     "meditation": meditation,
                     **eeg
-                }
-                raw_data.append(output)
+                })
 
-                # === Feedback Printout ===
+                # === Feedback + Media Control ===
                 if beta_mean > beta_threshold:
                     print("[FEEDBACK] Threshold exceeded: neurofeedback target achieved.")
+                    if media_state == 0:
+                        media.play()
+                        media_state = 1
                 else:
                     print("[FEEDBACK] Below threshold: continue focusing to maintain elevated beta activity.")
-    except Exception as e:
-        print(f"[ERROR] {e}")
-        continue
+                    if media_state == 1:
+                        media.pause()
+                        media_state = 0
 
-# === Save Results ===
-df_main = pd.DataFrame(raw_data)
-df_main.to_csv(nf_file, index=False)
+except KeyboardInterrupt:
+    print("[INFO] Interrupted by user. Stopping session.")
 
-df_feedback = pd.DataFrame({
-    "NFB Mean Beta": nf_beta_vals,
-    "NFB Score": nf_scores
-})
-df_feedback.to_csv(nf_details_file, index=False)
+finally:
+    sock.close()
+    media.stop()
+    print("[INFO] Neurofeedback session complete. Saving data...")
 
-sock.close()
-print(f"[SUCCESS] Neurofeedback session complete.\nSaved data to:\n→ {nf_file}\n→ {nf_details_file}")
+    df_main = pd.DataFrame(raw_data)
+    df_main.to_csv(nf_file, index=False)
+
+    df_feedback = pd.DataFrame({
+        "NFB Mean Beta": nf_beta_vals,
+        "NFB Score": nf_scores
+    })
+    df_feedback.to_csv(nf_details_file, index=False)
+
+    print(f"[SUCCESS] Data saved:\n→ {nf_file}\n→ {nf_details_file}")
